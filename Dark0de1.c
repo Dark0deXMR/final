@@ -15,7 +15,7 @@
 void usage(char *p) {
     printf("Uso: %s <rango> -p<puerto>\n", p);
     printf("Ejemplo:\n");
-    printf("  %s 114 -p22\n", p);
+    printf("  %s 111 -p22\n", p);
     exit(1);
 }
 
@@ -47,7 +47,7 @@ int main(int argc, char *argv[]) {
 
     char cmd[512];
     snprintf(cmd, sizeof(cmd),
-        "masscan %s.0.0.0/8 -p%s --rate %s --wait 0",
+        "masscan %s.0.0.0/8 -p%s --rate %s --wait 0 2>/dev/null",
         range, port, RATE
     );
 
@@ -67,7 +67,8 @@ int main(int argc, char *argv[]) {
 
             dprintf(pipefd[1], "%s\n", ip);
 
-            printf(GREEN "[SCAN] " WHITE "%s\n" RESET, ip);
+            printf(GREEN "[PortScan] " WHITE "- %s\n" RESET, ip);
+            fflush(stdout);
         }
     }
 
