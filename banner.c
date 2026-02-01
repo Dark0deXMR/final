@@ -35,7 +35,7 @@ int connect_timeout(int sock, struct sockaddr *addr, socklen_t len, int timeout_
 
 int main(int argc, char *argv[]) {
     if (argc != 4) {
-        fprintf(stderr, "Uso: %s <ips.txt | -> <puerto> <timeout_ms>\n", argv[0]);
+        fprintf(stderr, "Uso: %s <ips.txt | -> <puerto> <timeout>\n", argv[0]);
         return 1;
     }
 
@@ -45,7 +45,7 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    int port    = atoi(argv[2]);
+    int port = atoi(argv[2]);
     int timeout = atoi(argv[3]);
 
     FILE *blog = fopen("banner.log", "w");
@@ -91,7 +91,8 @@ int main(int argc, char *argv[]) {
         fprintf(blog, "%s -- %s\n", ip, banner);
         fflush(blog);
 
-        if (strstr(banner, "OpenSSH")) {
+        /* IPs válidas (ejemplo: SSH real) */
+        if (strstr(banner, "SSH")) {
             fprintf(ips, "%s\n", ip);
             fflush(ips);
         }
