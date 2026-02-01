@@ -8,14 +8,12 @@
 #define RATE "300000"
 #define OUTFILE "bios.txt"
 
-#define GREEN  "\033[92m"
-#define WHITE  "\033[97m"
-#define RESET  "\033[0m"
+#define GREEN "\033[92m"
+#define WHITE "\033[97m"
+#define RESET "\033[0m"
 
 void usage(char *p) {
     printf("Uso: %s <rango> -p<puerto>\n", p);
-    printf("Ejemplo:\n");
-    printf("  %s 111 -p22\n", p);
     exit(1);
 }
 
@@ -35,8 +33,8 @@ int main(int argc, char *argv[]) {
     int pipefd[2];
     pipe(pipefd);
 
-    pid_t banner_pid = fork();
-    if (banner_pid == 0) {
+    pid_t pid = fork();
+    if (pid == 0) {
         dup2(pipefd[0], STDIN_FILENO);
         close(pipefd[1]);
         execl("./banner", "banner", "-", port, "2000", NULL);
@@ -47,7 +45,9 @@ int main(int argc, char *argv[]) {
 
     char cmd[512];
     snprintf(cmd, sizeof(cmd),
-        "masscan %s.0.0.0/8 -p%s --rate %s --wait 0 2>/dev/null",
+        "masscan %s.0.0.0/8 -p%s --rate %s "
+        "--output-format list --output-filename - "
+        "--wait 0 2>/dev/null",
         range, port, RATE
     );
 
@@ -57,11 +57,10 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    char line[512];
+    char line[256], ip[64];
     while (fgets(line, sizeof(line), fp)) {
-        char ip[64];
-
-        if (sscanf(line, "%*[^o]on %63s", ip) == 1) {
+        /* formato: open tcp 22 111.x.x.x */
+        if (sscanf(line, "open %*s %*d %63s", ip) == 1) {
             fprintf(out, "%s\n", ip);
             fflush(out);
 
