@@ -39,13 +39,7 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    FILE *in;
-    if (strcmp(argv[1], "-") == 0) {
-        in = stdin;
-    } else {
-        in = fopen(argv[1], "r");
-    }
-
+    FILE *in = (strcmp(argv[1], "-") == 0) ? stdin : fopen(argv[1], "r");
     if (!in) {
         perror("input");
         return 1;
