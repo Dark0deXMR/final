@@ -35,7 +35,7 @@ int connect_timeout(int sock, struct sockaddr *addr, socklen_t len, int timeout_
 
 int main(int argc, char *argv[]) {
     if (argc != 4) {
-        fprintf(stderr, "Uso: %s <ips.txt | -> <puerto> <timeout>\n", argv[0]);
+        fprintf(stderr, "Uso: %s <ips.txt | -> <puerto> <timeout_ms>\n", argv[0]);
         return 1;
     }
 
@@ -45,7 +45,7 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    int port = atoi(argv[2]);
+    int port    = atoi(argv[2]);
     int timeout = atoi(argv[3]);
 
     FILE *blog = fopen("banner.log", "w");
@@ -77,11 +77,28 @@ int main(int argc, char *argv[]) {
             continue;
         }
 
+        /* 🔑 VOLVER A BLOQUEANTE */
+        fcntl(sock, F_SETFL, fcntl(sock, F_GETFL) & ~O_NONBLOCK);
+
+        /* esperar banner */
+        fd_set rfds;
+        struct timeval tv;
+        FD_ZERO(&rfds);
+        FD_SET(sock, &rfds);
+
+        tv.tv_sec  = 2;
+        tv.tv_usec = 0;
+
+        if (select(sock + 1, &rfds, NULL, NULL, &tv) <= 0) {
+            close(sock);
+            continue;
+        }
+
         char banner[256] = {0};
-        recv(sock, banner, sizeof(banner) - 1, 0);
+        int r = recv(sock, banner, sizeof(banner) - 1, 0);
         close(sock);
 
-        if (!banner[0]) continue;
+        if (r <= 0) continue;
 
         banner[strcspn(banner, "\r\n")] = 0;
 
@@ -91,7 +108,6 @@ int main(int argc, char *argv[]) {
         fprintf(blog, "%s -- %s\n", ip, banner);
         fflush(blog);
 
-        /* IPs válidas (ejemplo: SSH real) */
         if (strstr(banner, "SSH")) {
             fprintf(ips, "%s\n", ip);
             fflush(ips);
